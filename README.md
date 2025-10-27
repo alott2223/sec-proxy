@@ -110,11 +110,14 @@ The application uses SQLite with three main tables:
 ## Security Features
 
 - ✅ Password hashing with bcrypt (10 rounds)
-- ✅ Session-based authentication
+- ✅ Session-based authentication with HTTP-only cookies
 - ✅ Invite-only registration system
 - ✅ Device fingerprinting for tracking
 - ✅ Admin-only routes protected by middleware
 - ✅ SQL injection prevention via prepared statements
+- ✅ Rate limiting on authentication endpoints (5 attempts per 15 minutes)
+- ✅ Rate limiting on API endpoints (100 requests per 15 minutes)
+- ✅ Secure cookies in production mode
 
 ## Configuration
 

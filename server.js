@@ -4,12 +4,29 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const { createBareServer } = require('bare-server-node');
 const http = require('http');
+const rateLimit = require('express-rate-limit');
 
 const db = require('./database');
 const auth = require('./auth');
 
 const app = express();
 const bareServer = createBareServer('/bare/');
+
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 requests per window
+  message: 'Too many login attempts, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Middleware
 app.use(express.json());
@@ -20,7 +37,8 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false, // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production', // Only secure in production
+    httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -67,7 +85,7 @@ app.get('/admin', auth.requireAdmin, (req, res) => {
 });
 
 // API: Login
-app.post('/api/login', (req, res) => {
+app.post('/api/login', authLimiter, (req, res) => {
   const { username, password } = req.body;
   
   auth.loginUser(username, password, req, (result) => {
@@ -81,7 +99,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // API: Register
-app.post('/api/register', (req, res) => {
+app.post('/api/register', authLimiter, (req, res) => {
   const { username, password, inviteCode } = req.body;
   
   auth.registerUser(username, password, inviteCode, (result) => {
@@ -108,7 +126,7 @@ app.get('/api/user', auth.requireAuth, (req, res) => {
 });
 
 // API: Admin - Get all users with their devices
-app.get('/api/admin/users', auth.requireAdmin, (req, res) => {
+app.get('/api/admin/users', auth.requireAdmin, apiLimiter, (req, res) => {
   const users = db.prepare('SELECT id, username, is_admin, created_at FROM users').all();
   
   const usersWithDevices = users.map(user => {
@@ -126,14 +144,14 @@ app.get('/api/admin/users', auth.requireAdmin, (req, res) => {
 });
 
 // API: Admin - Create invite code
-app.post('/api/admin/invite', auth.requireAdmin, (req, res) => {
+app.post('/api/admin/invite', auth.requireAdmin, apiLimiter, (req, res) => {
   const code = generateInviteCode();
   const result = db.prepare('INSERT INTO invite_codes (code, created_by) VALUES (?, ?)').run(code, req.session.userId);
   res.json({ success: true, code });
 });
 
 // API: Admin - Get all invite codes
-app.get('/api/admin/invites', auth.requireAdmin, (req, res) => {
+app.get('/api/admin/invites', auth.requireAdmin, apiLimiter, (req, res) => {
   const invites = db.prepare(`
     SELECT 
       ic.id, 
