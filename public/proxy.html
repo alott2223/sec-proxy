@@ -216,7 +216,7 @@
     async function registerSW() {
       if ('serviceWorker' in navigator) {
         try {
-          await navigator.serviceWorker.register('/uv/sw.js', {
+          await navigator.serviceWorker.register('/sw.js', {
             scope: '/service/'
           });
           console.log('Service Worker registered');

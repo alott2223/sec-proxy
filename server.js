@@ -28,6 +28,11 @@ app.use(session({
 // Serve static files
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+// Serve service worker from root
+app.get('/sw.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'sw.js'));
+});
+
 // Routes
 // Home page - redirect to login if not authenticated
 app.get('/', (req, res) => {
