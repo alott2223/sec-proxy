@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Web Proxy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #1a1a2e;
+      color: white;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      background: #16213e;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .navbar h1 {
+      font-size: 24px;
+      color: #667eea;
+    }
+
+    .navbar-right {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .user-info {
+      color: #aaa;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #0f3460;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #1a4d7a;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .proxy-container {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    #urlInput {
+      flex: 1;
+      padding: 15px;
+      border: 2px solid #0f3460;
+      border-radius: 5px;
+      background: #1a1a2e;
+      color: white;
+      font-size: 16px;
+    }
+
+    #urlInput:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn-go {
+      padding: 15px 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-go:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    #proxyFrame {
+      width: 100%;
+      height: 70vh;
+      border: none;
+      border-radius: 5px;
+      background: white;
+    }
+
+    .info-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #0f3460;
+      border-radius: 5px;
+    }
+
+    .info-section h2 {
+      margin-bottom: 10px;
+      color: #667eea;
+    }
+
+    .info-section ul {
+      list-style-position: inside;
+      color: #aaa;
+    }
+
+    .info-section li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <h1>🌐 Secure Web Proxy</h1>
+    <div class="navbar-right">
+      <span class="user-info">Welcome, <span id="username">User</span>!</span>
+      <button class="btn btn-secondary" id="adminBtn" style="display: none;" onclick="location.href='/admin'">Admin Panel</button>
+      <button class="btn btn-primary" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="proxy-container">
+      <div class="search-box">
+        <input type="text" id="urlInput" placeholder="Enter URL (e.g., https://example.com)" autocomplete="off">
+        <button class="btn-go" onclick="navigateProxy()">Go</button>
+      </div>
+      <iframe id="proxyFrame"></iframe>
+    </div>
+
+    <div class="info-section">
+      <h2>About This Proxy</h2>
+      <ul>
+        <li>Secure web browsing through Ultraviolet proxy technology</li>
+        <li>Your session is protected with authentication</li>
+        <li>All connections are tracked for security purposes</li>
+        <li>Enter any URL in the search box above to browse securely</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
+  <script>
+    let currentUser = null;
+
+    async function loadUser() {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          currentUser = await response.json();
+          document.getElementById('username').textContent = currentUser.username;
+          if (currentUser.is_admin === 1) {
+            document.getElementById('adminBtn').style.display = 'block';
+          }
+        } else {
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        window.location.href = '/login';
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/login';
+      } catch (error) {
+        window.location.href = '/login';
+      }
+    }
+
+    async function registerSW() {
+      if ('serviceWorker' in navigator) {
+        try {
+          await navigator.serviceWorker.register('/uv/sw.js', {
+            scope: '/service/'
+          });
+          console.log('Service Worker registered');
+        } catch (error) {
+          console.error('Service Worker registration failed:', error);
+        }
+      }
+    }
+
+    function navigateProxy() {
+      let url = document.getElementById('urlInput').value.trim();
+      if (!url) return;
+
+      // Add protocol if missing
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+
+      // Encode the URL for Ultraviolet
+      const encodedUrl = __uv$config.encodeUrl(url);
+      const proxyUrl = __uv$config.prefix + encodedUrl;
+      
+      document.getElementById('proxyFrame').src = proxyUrl;
+    }
+
+    // Allow Enter key to navigate
+    document.getElementById('urlInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        navigateProxy();
+      }
+    });
+
+    // Load user info and register service worker on page load
+    loadUser();
+    registerSW();
+  </script>
+</body>
+</html>
