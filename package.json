@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^5.0.1",
     "@titaniumnetwork-dev/ultraviolet": "^2.0.0",
     "bare-server-node": "^2.0.0",
     "bcrypt": "^5.1.1",

@@ -157,7 +157,21 @@
     </div>
   </div>
 
+  <script src="/public/fingerprint.js"></script>
   <script>
+    let deviceFingerprint = null;
+
+    // Generate fingerprint on page load
+    (async function() {
+      try {
+        const fp = new DeviceFingerprint();
+        deviceFingerprint = await fp.generate();
+        console.log('Device fingerprint generated');
+      } catch (error) {
+        console.error('Fingerprint generation failed:', error);
+      }
+    })();
+
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -170,13 +184,23 @@
       errorDiv.style.display = 'none';
       successDiv.style.display = 'none';
       
+      // Ensure fingerprint is generated
+      if (!deviceFingerprint) {
+        try {
+          const fp = new DeviceFingerprint();
+          deviceFingerprint = await fp.generate();
+        } catch (error) {
+          console.error('Fingerprint generation failed:', error);
+        }
+      }
+      
       try {
         const response = await fetch('/api/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ username, password, inviteCode })
+          body: JSON.stringify({ username, password, inviteCode, fingerprint: deviceFingerprint })
         });
         
         const data = await response.json();

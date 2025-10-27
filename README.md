@@ -6,7 +6,15 @@ A secure web proxy based on Ultraviolet with authentication, invite-only registr
 
 - 🔒 **Secure Authentication System** - Login/Register with session management
 - 🎫 **Invite-Only Registration** - Users need a valid invite code to register
-- 📱 **Device Tracking** - Automatically tracks devices that log in under each account
+- 📱 **Advanced Device Tracking** - Multi-point fingerprinting to prevent account sharing
+  - Canvas fingerprinting
+  - WebGL fingerprinting
+  - Audio fingerprinting
+  - Font detection
+  - Screen properties
+  - Browser/platform detection
+  - Timezone and language settings
+  - Maximum 3 devices per account
 - 👨‍💼 **Admin Dashboard** - View all users, their devices, and manage invite codes
 - 🌐 **Ultraviolet Proxy** - Browse the web securely through Ultraviolet proxy technology
 - 🔐 **Password Hashing** - Secure password storage using bcrypt
@@ -89,10 +97,20 @@ On first run, a default admin account and invite code are created:
 3. **View User Devices:**
    - The admin panel shows all users and their devices
    - Device information includes:
+     - Platform and Browser
      - User Agent
      - IP Address
+     - Language preferences
+     - Unique device fingerprint (hash)
      - Last Login time
      - First Seen time
+   - Device count displayed per user
+   - Advanced fingerprinting prevents account sharing
+
+4. **Account Sharing Prevention:**
+   - Each account is limited to 3 devices
+   - Attempting to login from a 4th device will be blocked
+   - Admin can monitor all devices per account
 
 4. **Monitor Invite Codes:**
    - View all invite codes (used and unused)
@@ -112,7 +130,16 @@ The application uses SQLite with three main tables:
 - ✅ Password hashing with bcrypt (10 rounds)
 - ✅ Session-based authentication with HTTP-only cookies
 - ✅ Invite-only registration system
-- ✅ Device fingerprinting for tracking
+- ✅ **Advanced device fingerprinting** to prevent account sharing:
+  - Canvas fingerprinting
+  - WebGL fingerprinting (GPU identification)
+  - Audio context fingerprinting
+  - Font detection
+  - Screen properties and resolution
+  - Browser and platform detection
+  - Timezone and language settings
+  - Combined client + server fingerprinting
+  - Maximum 3 devices per account limit
 - ✅ Admin-only routes protected by middleware
 - ✅ SQL injection prevention via prepared statements
 - ✅ Rate limiting on authentication endpoints (5 attempts per 15 minutes)

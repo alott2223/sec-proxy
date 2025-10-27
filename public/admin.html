@@ -299,8 +299,11 @@
                 <div class="device-item">
                   <strong>🖥️ Device ${device.id}</strong>
                   <div class="device-info">
+                    Platform: ${device.platform || 'Unknown'} | Browser: ${device.browser || 'Unknown'}<br>
                     User Agent: ${device.user_agent || 'Unknown'}<br>
                     IP: ${device.ip_address || 'Unknown'}<br>
+                    Language: ${device.accept_language || 'Unknown'}<br>
+                    Fingerprint: ${device.device_fingerprint ? device.device_fingerprint.substring(0, 16) + '...' : 'N/A'}<br>
                     Last Login: ${new Date(device.last_login).toLocaleString()}<br>
                     First Seen: ${new Date(device.created_at).toLocaleString()}
                   </div>
@@ -317,11 +320,11 @@
                 </span>
               </div>
               <div style="color: #aaa; font-size: 14px;">
-                Joined: ${new Date(user.created_at).toLocaleDateString()}
+                Joined: ${new Date(user.created_at).toLocaleDateString()} | Devices: ${user.deviceCount || 0}
               </div>
             </div>
             <div class="device-list">
-              <strong>Devices (${user.devices.length}):</strong>
+              <strong>Tracked Devices:</strong>
               ${devicesHtml}
             </div>
           `;

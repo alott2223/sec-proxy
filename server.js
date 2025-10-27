@@ -89,26 +89,34 @@ app.get('/admin', auth.requireAdmin, (req, res) => {
 
 // API: Login
 app.post('/api/login', authLimiter, (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, fingerprint } = req.body;
   
-  auth.loginUser(username, password, req, (result) => {
+  auth.loginUser(username, password, req, fingerprint, (result) => {
     if (result.success) {
       req.session.userId = result.userId;
-      res.json({ success: true });
+      req.session.deviceFingerprint = fingerprint;
+      res.json({ 
+        success: true,
+        newDevice: result.newDevice 
+      });
     } else {
-      res.status(401).json({ error: result.error });
+      res.status(401).json({ 
+        error: result.error,
+        requiresApproval: result.requiresApproval 
+      });
     }
   });
 });
 
 // API: Register
 app.post('/api/register', authLimiter, (req, res) => {
-  const { username, password, inviteCode } = req.body;
+  const { username, password, inviteCode, fingerprint } = req.body;
   
   auth.registerUser(username, password, inviteCode, (result) => {
     if (result.success) {
       req.session.userId = result.userId;
-      auth.trackDevice(result.userId, req);
+      req.session.deviceFingerprint = fingerprint;
+      auth.trackDevice(result.userId, req, fingerprint);
       res.json({ success: true });
     } else {
       res.status(400).json({ error: result.error });
@@ -134,12 +142,15 @@ app.get('/api/admin/users', auth.requireAdmin, apiLimiter, (req, res) => {
   
   const usersWithDevices = users.map(user => {
     const devices = db.prepare(
-      'SELECT id, device_fingerprint, user_agent, ip_address, last_login, created_at FROM devices WHERE user_id = ? ORDER BY last_login DESC'
+      `SELECT id, device_fingerprint, user_agent, ip_address, platform, browser,
+       accept_language, last_login, created_at 
+       FROM devices WHERE user_id = ? ORDER BY last_login DESC`
     ).all(user.id);
     
     return {
       ...user,
-      devices
+      devices,
+      deviceCount: devices.length
     };
   });
   

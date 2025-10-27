@@ -129,7 +129,21 @@
     </div>
   </div>
 
+  <script src="/public/fingerprint.js"></script>
   <script>
+    let deviceFingerprint = null;
+
+    // Generate fingerprint on page load
+    (async function() {
+      try {
+        const fp = new DeviceFingerprint();
+        deviceFingerprint = await fp.generate();
+        console.log('Device fingerprint generated');
+      } catch (error) {
+        console.error('Fingerprint generation failed:', error);
+      }
+    })();
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -137,22 +151,39 @@
       const password = document.getElementById('password').value;
       const errorDiv = document.getElementById('error');
       
+      // Ensure fingerprint is generated
+      if (!deviceFingerprint) {
+        try {
+          const fp = new DeviceFingerprint();
+          deviceFingerprint = await fp.generate();
+        } catch (error) {
+          console.error('Fingerprint generation failed:', error);
+        }
+      }
+      
       try {
         const response = await fetch('/api/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password, fingerprint: deviceFingerprint })
         });
         
         const data = await response.json();
         
         if (data.success) {
+          if (data.newDevice) {
+            console.log('New device registered for this account');
+          }
           window.location.href = '/';
         } else {
           errorDiv.textContent = data.error || 'Login failed';
           errorDiv.style.display = 'block';
+          
+          if (data.requiresApproval) {
+            errorDiv.textContent += ' Please contact an administrator.';
+          }
         }
       } catch (error) {
         errorDiv.textContent = 'An error occurred. Please try again.';

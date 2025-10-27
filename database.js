@@ -28,14 +28,21 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     device_fingerprint TEXT NOT NULL,
+    client_fingerprint TEXT,
+    server_fingerprint TEXT,
     user_agent TEXT,
     ip_address TEXT,
+    accept_language TEXT,
+    accept_encoding TEXT,
+    platform TEXT,
+    browser TEXT,
     last_login DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
 
   CREATE INDEX IF NOT EXISTS idx_devices_user_id ON devices(user_id);
+  CREATE INDEX IF NOT EXISTS idx_devices_fingerprint ON devices(device_fingerprint);
   CREATE INDEX IF NOT EXISTS idx_invite_codes_code ON invite_codes(code);
 `);
 
