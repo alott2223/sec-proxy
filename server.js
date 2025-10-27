@@ -12,6 +12,9 @@ const auth = require('./auth');
 const app = express();
 const bareServer = createBareServer('/bare/');
 
+// Trust proxy for rate limiting behind reverse proxies
+app.set('trust proxy', 1);
+
 // Rate limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
